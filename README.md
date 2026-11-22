@@ -869,4 +869,3 @@ Testing areas include:
 ---
 
 **Project Goal:** Build an intelligent, scalable, and transparent e-commerce returns management platform using modern software engineering and AI technologies.
->>>>>>> 69fa73d8c4e2b38510869f39314f1fb5afcdec5d
