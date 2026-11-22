@@ -1,0 +1,29 @@
+"""Refund and logistics provider statuses."""
+
+from enum import Enum
+
+
+class RefundProviderStatus(str, Enum):
+    ELIGIBLE = "ELIGIBLE"
+    INELIGIBLE = "INELIGIBLE"
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class ShipmentProviderStatus(str, Enum):
+    LABEL_PENDING = "LABEL_PENDING"
+    LABEL_READY = "LABEL_READY"
+    IN_TRANSIT = "IN_TRANSIT"
+    DELIVERED = "DELIVERED"
+    FAILED = "FAILED"
+
+
+class NotificationEventType(str, Enum):
+    RETURN_LABEL_READY = "RETURN_LABEL_READY"
+    RETURN_IN_TRANSIT = "RETURN_IN_TRANSIT"
+    RETURN_RECEIVED = "RETURN_RECEIVED"
+    REFUND_INITIATED = "REFUND_INITIATED"
+    REFUND_COMPLETED = "REFUND_COMPLETED"
+    REFUND_FAILED = "REFUND_FAILED"

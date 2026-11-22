@@ -1,0 +1,106 @@
+name: returnflow
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: returnflow-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-returnflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-returnflow}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - returnflow_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: returnflow-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - returnflow_redis:/data
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  api:
+    profiles: ["full"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: returnflow-api:local
+    container_name: returnflow-api
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-returnflow}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-returnflow}
+      REDIS_URL: redis://redis:6379/0
+      KNOWLEDGE_STORAGE_PATH: /var/lib/returnflow/knowledge
+      CHROMA_PERSIST_PATH: /var/lib/returnflow/chroma
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - returnflow_knowledge:/var/lib/returnflow/knowledge
+      - returnflow_chroma:/var/lib/returnflow/chroma
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+    restart: unless-stopped
+
+  web:
+    profiles: ["full"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    image: returnflow-web:local
+    container_name: returnflow-web
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  returnflow_postgres:
+  returnflow_redis:
+  returnflow_knowledge:
+  returnflow_chroma:

@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "returnflow-api"
+version = "0.11.0"
+description = "ReturnFlow API foundation"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.6",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic-settings>=2.7.0",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "redis>=5.2.1",
+    "argon2-cffi>=23.1.0",
+    "PyJWT>=2.10.1",
+    "email-validator>=2.2.0",
+    "pypdf>=5.1.0",
+    "python-docx>=1.1.2",
+    "python-multipart>=0.0.20",
+    "chromadb>=0.6.3",
+    "sentence-transformers>=3.3.1",
+    "langchain-text-splitters>=0.3.6",
+    "google-generativeai>=0.8.4",
+    "langgraph>=0.2.60",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.0",
+    "httpx>=0.28.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "integration: checks that require live PostgreSQL and Redis",
+    "live_llm: optional live Gemini smoke test when credentials exist",
+    "mock_llm: uses mocked LLM/embeddings providers (default in conftest)",
+]
+addopts = "-m 'not live_llm'"
